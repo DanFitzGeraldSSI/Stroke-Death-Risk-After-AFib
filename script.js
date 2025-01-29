@@ -2,12 +2,12 @@ document.getElementById('risk-form').addEventListener('submit', function(event) 
     event.preventDefault();
     
     const age = parseInt(document.getElementById('age').value);
-    const gender = document.getElementById('gender').value;
+    const gender = parseInt(document.getElementById('gender').value);
     const systolicBP = parseInt(document.getElementById('systolicBP').value);
-    const diabetes = document.getElementById('diabetes').value;
-    const priorStroke = document.getElementById('priorStroke').value;
+    const diabetes = parseInt(document.getElementById('diabetes').value);
+    const priorStrokeTIA = parseInt(document.getElementById('priorStrokeTIA').value);
     
-    const result = calculateStrokeRisk(age, gender, systolicBP, diabetes, priorStroke);
+    const result = calculateStrokeRisk(age, gender, systolicBP, diabetes, priorStrokeTIA);
     
     document.getElementById('result').innerHTML = `
         <div id="stroke-risk-result">5-year stroke risk is ${result.risk}%.</div>
@@ -43,7 +43,7 @@ document.getElementById('risk-form').addEventListener('submit', function(event) 
     `;
 });
 
-function calculateStrokeRisk(age, gender, systolicBP, diabetes, priorStroke) {
+function calculateStrokeRisk(age, gender, systolicBP, diabetes, priorStrokeTIA) {
     // Cox Proportional Hazards Regression Coefficients for 5-year stroke risk
     const coefficients = {
         "Age": 0.2773,
@@ -56,10 +56,10 @@ function calculateStrokeRisk(age, gender, systolicBP, diabetes, priorStroke) {
     // Patient values
     const patientValues = {
         "Age": age,
-        "Sex (Male=1, Female=0)": gender === 'female' ? 1 : 0,
+        "Sex (Male=1, Female=0)": gender,
         "Systolic BP": systolicBP,
-        "Diabetes": diabetes === 'yes' ? 1 : 0,
-        "Prior Stroke/TIA": priorStroke === 'yes' ? 1 : 0
+        "Diabetes": diabetes,
+        "Prior Stroke/TIA": priorStrokeTIA
     };
 
     // Reference values from the study (baseline values)
@@ -74,11 +74,7 @@ function calculateStrokeRisk(age, gender, systolicBP, diabetes, priorStroke) {
     // Compute individual contributions
     const contributions = {};
     for (const key in coefficients) {
-        if (referenceValues[key] !== undefined) {
-            contributions[key] = coefficients[key] * (patientValues[key] - referenceValues[key]);
-        } else {
-            contributions[key] = coefficients[key] * patientValues[key];
-        }
+        contributions[key] = coefficients[key] * (patientValues[key] - referenceValues[key]);
     }
 
     // Compute total score
@@ -99,17 +95,17 @@ function calculateStrokeRisk(age, gender, systolicBP, diabetes, priorStroke) {
             <td>${key}</td>
             <td>${patientValues[key]}</td>
             <td>${coefficients[key]}</td>
-            <td>${referenceValues[key] !== undefined ? referenceValues[key] : '-'}</td>
+            <td>${referenceValues[key]}</td>
             <td>${contributions[key].toFixed(3)}</td>
-            <td>${coefficients[key]} × (${patientValues[key]} - ${referenceValues[key] !== undefined ? referenceValues[key] : 0})</td>
-            <td>${(coefficients[key] * patientValues[key]).toFixed(3)}</td>
+            <td>${coefficients[key]} × (${patientValues[key]} - ${referenceValues[key]})</td>
+            <td>${contributions[key].toFixed(3)}</td>
         </tr>
     `).join('');
 
     return {
         risk: risk_5_year.toFixed(2),
         totalScore: totalScore.toFixed(3),
-        totalScoreFormula: Object.keys(coefficients).map(key => `β<sub>i</sub>${coefficients[key]} × (${key} ${patientValues[key]} - Ref Value ${referenceValues[key] !== undefined ? referenceValues[key] : 0})`).join(' + '),
+        totalScoreFormula: Object.keys(coefficients).map(key => `β<sub>i</sub>${coefficients[key]} × (${key} ${patientValues[key]} - Ref Value ${referenceValues[key]})`).join(' + '),
         survivalProbability: S5.toFixed(3),
         tableRows
     };

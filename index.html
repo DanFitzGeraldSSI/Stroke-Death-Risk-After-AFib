@@ -14,26 +14,26 @@
                 <label for="age">Age (45-90):</label>
                 <input type="number" id="age" name="age" min="45" max="90" required>
                 
-                <label for="systolic-bp">Systolic Blood Pressure (90-200):</label>
-                <input type="number" id="systolic-bp" name="systolic-bp" min="90" max="200" required>
-                
-                <label for="diabetes">Diabetes (Yes=1, No=0):</label>
-                <select id="diabetes" name="diabetes" required>
-                    <option value="0">No</option>
-                    <option value="1">Yes</option>
+                <label for="gender">Gender (Male=1, Female=0):</label>
+                <select id="gender" name="gender" required>
+                    <option value="1">Male</option>
+                    <option value="0">Female</option>
                 </select>
                 
-                <label for="prior-stroke-tia">Prior Stroke/TIA (Yes=1, No=0):</label>
-                <select id="prior-stroke-tia" name="prior-stroke-tia" required>
+                <label for="systolic-bp">Systolic Blood Pressure (90-200):</label>
+                <input type="number" id="systolicBP" name="systolic-bp" min="90" max="200" required>
+                
+                <label for="diabetes">Diabetes Mellitus (Yes=1, No=0):</label>
+                <select id="diabetes" name="diabetes" required>
                     <option value="0">No</option>
                     <option value="1">Yes</option>
                 </select>
             </div>
             <div class="form-column">
-                <label for="sex">Sex (Male=1, Female=0):</label>
-                <select id="sex" name="sex" required>
-                    <option value="1">Male</option>
-                    <option value="0">Female</option>
+                <label for="prior-stroke-tia">Prior Stroke or TIA (Yes=1, No=0):</label>
+                <select id="priorStrokeTIA" name="prior-stroke-tia" required>
+                    <option value="0">No</option>
+                    <option value="1">Yes</option>
                 </select>
             </div>
         </div>
