@@ -3,42 +3,38 @@ document.getElementById('risk-form').addEventListener('submit', function(event) 
     
     const age = parseInt(document.getElementById('age').value);
     const gender = document.getElementById('gender').value;
-    const bmi = parseFloat(document.getElementById('bmi').value);
-    const bloodPressure = parseInt(document.getElementById('blood-pressure').value);
-    const hypertensionMedications = document.getElementById('hypertension-medications').value;
-    const prInterval = parseInt(document.getElementById('pr-interval').value);
-    const murmur = document.getElementById('murmur').value;
-    const heartFailure = document.getElementById('heart-failure').value;
+    const systolicBP = parseInt(document.getElementById('systolicBP').value);
+    const diabetes = document.getElementById('diabetes').value;
+    const priorStroke = document.getElementById('priorStroke').value;
     
-    const result = calculateRisk(age, gender, bmi, bloodPressure, hypertensionMedications, prInterval, murmur, heartFailure);
+    const result = calculateStrokeRisk(age, gender, systolicBP, diabetes, priorStroke);
     
     document.getElementById('result').innerHTML = `
-        <div id="risk-result">10-year AFib risk is ${result.risk}%.</div>
-        <p>Compared to someone with the lowest risk factors, your risk of developing atrial fibrillation over the next 10 years is approximately ${result.risk} times higher.</p>
+        <div id="stroke-risk-result">5-year stroke risk is ${result.risk}%.</div>
         <h3>Cox Hazard Estimated Risk Formula:</h3>
         <p class="equation">Total Score = ∑(β<sub>i</sub> × (Patient’s Value − Reference Value))</p>
         <div style="margin-left: 101px;">
-            <p class="equation">S(10) = S<sub>0</sub>(10)<sup>exp(Total Score)</sup></p>
-            <p class="equation">10-Year Risk = 1 − S(10)</p>
+            <p class="equation">S(5) = S<sub>0</sub>(5)<sup>exp(Total Score)</sup></p>
+            <p class="equation">5-Year Risk = 1 − S(5)</p>
         </div>
         <p>where:</p>
         <ul>
             <li>β<sub>i</sub> are the Cox regression coefficients for each predictor.</li>
-            <li>S<sub>0</sub>(10) is the baseline survival probability at 10 years.</li>
-            <li>S(10) is the probability of not developing AF in 10 years.</li>
+            <li>S<sub>0</sub>(5) is the baseline survival probability at 5 years.</li>
+            <li>S(5) is the probability of not having a stroke in 5 years.</li>
         </ul>
         <h3>Variables Applied to Calculation:</h3>
         <p class="equation">Total Score = ${result.totalScoreFormula}</p>
         <p class="equation">Total Score = ${result.totalScore}</p>
-        <p class="equation">Baseline Calculation: S<sub>0</sub>(10) = 0.956</p>
+        <p class="equation">Baseline Calculation: S<sub>0</sub>(5) = 0.92</p>
         <div style="margin-left: 101px;">
-            <p class="equation">S(10) = 0.956<sup>exp(${result.totalScore})</sup></p>
+            <p class="equation">S(5) = 0.92<sup>exp(${result.totalScore})</sup></p>
         </div>
-        <p class="equation" style="text-align: left;">Probability of not developing AFib S(10) = ${result.survivalProbability}</p>
+        <p class="equation" style="text-align: left;">Probability of not having a stroke S(5) = ${result.survivalProbability}</p>
         <div style="margin-left: 101px;">
-            <p class="equation">10-Year Risk = 1 − ${result.survivalProbability}</p>
+            <p class="equation">5-Year Risk = 1 − ${result.survivalProbability}</p>
         </div>
-        <p class="equation" style="text-align: left;">10-Year Risk = 1 − ${result.survivalProbability} = ${(1 - result.survivalProbability).toFixed(4)} or ${((1 - result.survivalProbability) * 100).toFixed(2)}%</p>
+        <p class="equation" style="text-align: left;">5-Year Risk = 1 − ${result.survivalProbability} = ${(1 - result.survivalProbability).toFixed(4)} or ${((1 - result.survivalProbability) * 100).toFixed(2)}%</p>
         <h3>Calculation Details:</h3>
         <table>
             <tr><th>Variable</th><th>Patient Value</th><th>β (Coefficient)</th><th>Reference Value</th><th>Contribution</th><th>Calculation</th><th>Sum</th></tr>
@@ -47,41 +43,32 @@ document.getElementById('risk-form').addEventListener('submit', function(event) 
     `;
 });
 
-function calculateRisk(age, gender, bmi, bloodPressure, hypertensionMedications, prInterval, murmur, heartFailure) {
-    // Cox Proportional Hazards Regression Coefficients
+function calculateStrokeRisk(age, gender, systolicBP, diabetes, priorStroke) {
+    // Cox Proportional Hazards Regression Coefficients for 5-year stroke risk
     const coefficients = {
-        "Age": 0.15052,
-        "Sex (Male=1, Female=0)": 1.99406,
-        "Systolic BP": 0.00615,
-        "Hypertension Treatment (Yes=1, No=0)": 0.4241,
-        "BMI": 0.0193,
-        "PR Interval": 0.07065,
-        "Significant Murmur (Yes=1, No=0)": 3.79586,
-        "Heart Failure (Yes=1, No=0)": 9.42833
+        "Age": 0.2773,
+        "Sex (Male=1, Female=0)": 0.6523,
+        "Systolic BP": 0.0583,
+        "Diabetes": 0.5878,
+        "Prior Stroke/TIA": 0.6349
     };
 
     // Patient values
     const patientValues = {
         "Age": age,
-        "Sex (Male=1, Female=0)": gender === 'male' ? 1 : 0,
-        "Systolic BP": bloodPressure,
-        "Hypertension Treatment (Yes=1, No=0)": hypertensionMedications === 'yes' ? 1 : 0,
-        "BMI": bmi,
-        "PR Interval": prInterval,
-        "Significant Murmur (Yes=1, No=0)": murmur === 'yes' ? 1 : 0,
-        "Heart Failure (Yes=1, No=0)": heartFailure === 'yes' ? 1 : 0
+        "Sex (Male=1, Female=0)": gender === 'female' ? 1 : 0,
+        "Systolic BP": systolicBP,
+        "Diabetes": diabetes === 'yes' ? 1 : 0,
+        "Prior Stroke/TIA": priorStroke === 'yes' ? 1 : 0
     };
 
     // Reference values from the study (baseline values)
     const referenceValues = {
-        "Age": 60.9,
+        "Age": 70,
         "Sex (Male=1, Female=0)": 0,  // Not subtracted since categorical
-        "Systolic BP": 136,
-        "Hypertension Treatment (Yes=1, No=0)": 0,  // Not subtracted since categorical
-        "BMI": 26.3,
-        "PR Interval": 164,
-        "Significant Murmur (Yes=1, No=0)": 0,  // Not subtracted since categorical
-        "Heart Failure (Yes=1, No=0)": 0  // Not subtracted since categorical
+        "Systolic BP": 130,
+        "Diabetes": 0,  // Not subtracted since categorical
+        "Prior Stroke/TIA": 0  // Not subtracted since categorical
     };
 
     // Compute individual contributions
@@ -97,14 +84,14 @@ function calculateRisk(age, gender, bmi, bloodPressure, hypertensionMedications,
     // Compute total score
     const totalScore = Object.values(contributions).reduce((a, b) => a + b, 0);
 
-    // Baseline survival at 10 years (from study assumption)
-    const S0_10 = 0.956;
+    // Baseline survival at 5 years (from study assumption)
+    const S0_5 = 0.92;
 
     // Compute survival probability
-    const S10 = S0_10 ** Math.exp(totalScore);
+    const S5 = S0_5 ** Math.exp(totalScore);
 
-    // Compute 10-year risk
-    const risk_10_year = (1 - S10) * 100;
+    // Compute 5-year risk
+    const risk_5_year = (1 - S5) * 100;
 
     // Create table rows for output
     const tableRows = Object.keys(coefficients).map(key => `
@@ -120,11 +107,10 @@ function calculateRisk(age, gender, bmi, bloodPressure, hypertensionMedications,
     `).join('');
 
     return {
-        risk: risk_10_year.toFixed(2),
+        risk: risk_5_year.toFixed(2),
         totalScore: totalScore.toFixed(3),
         totalScoreFormula: Object.keys(coefficients).map(key => `β<sub>i</sub>${coefficients[key]} × (${key} ${patientValues[key]} - Ref Value ${referenceValues[key] !== undefined ? referenceValues[key] : 0})`).join(' + '),
-        survivalProbability: S10.toFixed(3),
+        survivalProbability: S5.toFixed(3),
         tableRows
     };
 }
-
